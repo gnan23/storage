@@ -1,0 +1,90 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Windows;
+using Microsoft.Office.Interop.Outlook;
+
+
+namespace Wpfoutlook
+{
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        
+            public string EmailFrom { get; set; }
+
+            public string EmailSubject { get; set; }
+
+
+            public string EmailBody { get; set; }
+			
+			public MainWindow(){
+				InitializeComponent();
+				ReadMailItems();
+			}
+
+            public List<OutlookEmails> ReadMailItems()
+            {
+                Microsoft.Office.Interop.Outlook.Application outlookApplication = null;
+                NameSpace outlookNamespace = null;
+                MAPIFolder inboxFolder = null;
+                Items mailItems = null;
+                List<OutlookEmails> listEmailDetails = new List<OutlookEmails>();
+                OutlookEmails emailDetails;
+
+                //MainWindow mw = new MainWindow();
+                var mails = OutlookEmails.ReadMailItems();
+                int i = 1;
+                foreach (var mail in mails)
+                {
+                    Text1.Text = ("mail no" + i);
+                    Text2.Text = ("mail received from" + mail.EmailFrom);
+                    //Console.WriteLine("mail Subject" + mail.EmailSubject);
+                    //Console.WriteLine("mail body" + mail.EmailBody);
+                    //Console.WriteLine("");
+                    i = i + 1;
+                }
+               // console.ReadKey();
+
+                try
+                {
+                    outlookApplication = new Microsoft.Office.Interop.Outlook.Application();
+                    outlookNamespace = outlookApplication.GetNamespace("Mapi");
+                    inboxFolder = outlookNamespace.GetDefaultFolder(OlDefaultFolders.olFolderInbox);
+                    mailItems = inboxFolder.Items;
+                    foreach (MailItem item in mailItems)
+                    {
+                        emailDetails = new OutlookEmails();
+                        emailDetails.EmailFrom = item.SenderEmailAddress;
+                        emailDetails.EmailBody = item.Body;
+                        listEmailDetails.Add(emailDetails);
+                        ReleaseComobject(item);
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+                finally
+                {
+                    ReleaseComobject(mailItems);
+                    ReleaseComobject(inboxFolder);
+                    ReleaseComobject(outlookNamespace);
+                    ReleaseComobject(outlookApplication);
+                }
+                return listEmailDetails;
+
+            }
+            private static void ReleaseComobject(object obj)
+            {
+                if (obj != null)
+                {
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(obj);
+                    obj = null;
+                }
+            }
+        
+
+    }
+}
